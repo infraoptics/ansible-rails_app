@@ -6,4 +6,4 @@
 - include: passenger-config.yml
 - include: install-app.yml
 - include: solr-config.yml
-  when: is_blacklight_app
+  when: is_local_blacklight_app

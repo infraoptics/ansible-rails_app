@@ -12,6 +12,8 @@
 
 - include: ssl.yml
   when: app_use_ssl
+  tags:
+    - ssl   
 
 - name: create applications conf directory
   file:

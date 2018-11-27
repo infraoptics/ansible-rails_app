@@ -23,6 +23,8 @@
     - bison
     - curl
     - sqlite-devel
+    - mariadb-devel
+    - mariadb
     - epel-release
   become: yes
 
@@ -31,6 +33,13 @@
     name: nodejs
     state: present
   become: yes
+
+- name: Install yarn node package if this project needs it
+  npm:
+    name: yarn
+    global: yes
+    state: present
+  when: rails_app_use_webpack is defined and rails_app_use_webpack
 
 - name: Install app specifc dependencies
   yum:

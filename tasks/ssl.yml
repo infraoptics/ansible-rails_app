@@ -1,0 +1,37 @@
+---
+
+- name: Copy the ssl cert and key to the expected locations
+  copy:
+    src: "{{ inventory }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items: "{{ app_server_cert_files }}"
+  when: item.dest != False
+  become: yes
+  notify: restart apache
+  tags:
+    - rails_app
+    - passenger
+    - ssl
+
+- name: Copy intermediate cert when required
+  copy:
+    src: globalsign-intermediate.crt
+    dest: "{{ app_ssl_intermediate_path }}"
+  become: yes
+  when: app_use_intermediate_cert
+  notify: restart apache
+  tags:
+    - rails_app
+    - passenger
+    - ssl
+
+- name: template apache config for all.yml applications on port 443
+  template:
+    src: ssl.conf.j2
+    dest: /etc/httpd/conf.d/ssl.conf
+  become: yes
+  notify: restart apache
+  tags:
+    - rails_app
+    - passenger
+    - ssl

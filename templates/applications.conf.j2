@@ -4,6 +4,10 @@ Options -Indexes
 # Disable Trace
 TraceEnable off
 
+# Disable back-end info in headers.
+ServerSignature Off
+ServerTokens Prod
+
 Header always set X-Frame-Options SAMEORIGIN
 Header always set X-Content-Type-Options nosniff
 
@@ -11,10 +15,9 @@ Header always set X-Content-Type-Options nosniff
     ServerName {{ fqdn| default(ansible_fqdn) }}
 
     {% if rails_app_force_ssl %}
-    RewriteEngine On
-    RewriteCond %{HTTPS} off
-    RewriteRule (.*) https://%{SERVER_NAME}/$1 [R,L]
+      RedirectMatch permanent (.*) https://{{ fqdn| default(ansible_fqdn) }}/$1
     {% endif %}
+
 
     # Tell Apache and Passenger where your app's 'public' directory is
     DocumentRoot /var/www/html

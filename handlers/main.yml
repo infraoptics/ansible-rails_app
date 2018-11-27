@@ -2,7 +2,7 @@
 
 - name: deploy tasks
   shell: >
-    bash -lc 'RAILS_ENV={{ rails_app_env }} bundle exec rake {{ item }}'
+    bash -lc 'NODE_ENV=production RAILS_ENV={{ rails_app_env }} bundle exec rake {{ item }}'
   args:
     chdir: "{{ rails_app_install_path }}"
   with_items:
@@ -38,6 +38,6 @@
     name: solr
     state: restarted
   become: yes
-  when: is_blacklight_app
+  when: is_local_blacklight_app
   tags:
     - rails_app

@@ -1,0 +1,11 @@
+---
+
+- name: Set some environment variables the rails app needs in the app users .bashrc
+  lineinfile:
+    dest: /home/{{ rails_app_user }}/.bashrc
+    regexp: "export {{item.envvar}}="
+    line: "export {{item.envvar}}=\"{{item.value}}\";"
+    owner: "{{ rails_app_user }}"
+    group: "{{ rails_app_user }}"
+  with_items: {{ rails_app_env_vars | [] }}
+

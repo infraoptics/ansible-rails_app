@@ -13,8 +13,7 @@
     permanent: yes
     service: "{{ item.0 }}"
     source: "{{ item.1 | default(omit) }}"
-    source: "{{ hostvars[groups.proxy[0]][(network_interface|default('ansible_eth0'))]['ipv4']['address'] }}"
-  with_together: 
-  - "{{ rails_app_firewall_services| default(['http','https']) }}"
-  - "{{ rails_app_firewall_sources| default([None,None]) }}"
+  with_together:
+  - "{{ rails_app_firewall_services }}"
+  - "{{ rails_app_firewall_sources }}"
   notify: reload firewall

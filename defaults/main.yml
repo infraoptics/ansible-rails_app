@@ -15,7 +15,11 @@ rails_app_gem_path: "{{rails_app_ruby_path}}/lib/ruby/gems"
 rails_app_url_base_path: "/"
 rails_app_use_ssl: false
 rails_app_force_ssl: false
-
+rails_app_env_vars: []
+rails_app_firewall_services:
+  - http
+  - https
+rails_app_firewall_sources: []
 
 rails_app_default_config:
   - secrets.yml

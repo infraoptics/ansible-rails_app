@@ -8,4 +8,4 @@
     owner: "{{ rails_app_user }}"
     group: "{{ rails_app_user }}"
   with_items: "{{ rails_app_env_vars | default([]) }}"
-
+  notify: restart passenger app

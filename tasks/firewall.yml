@@ -13,7 +13,5 @@
     permanent: yes
     service: "{{ item.0 }}"
     source: "{{ item.1 | default(omit) }}"
-  with_together:
-  - "{{ rails_app_firewall_services }}"
-  - "{{ rails_app_firewall_sources }}"
+  loop: "{{ rails_app_firewall_services | product(rails_app_firewall_sources) | list }}"
   notify: reload firewall

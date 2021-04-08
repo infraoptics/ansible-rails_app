@@ -60,7 +60,7 @@
 
 - name: restart apache
   service:
-    name: httpd
+    name: "{{ httpd_svc }}"
     state: restarted
   become: true
   when: is_webserver

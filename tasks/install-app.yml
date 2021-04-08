@@ -13,6 +13,7 @@
     version: "{{ rails_app_git_branch }}"
     recursive: true
     accept_hostkey: true
+    force: true
   register: git
   become: true
   become_user: "{{ rails_app_user }}"

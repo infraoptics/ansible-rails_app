@@ -1,0 +1,38 @@
+---
+- include: ssl.yml
+  when: app_use_ssl
+  tags:
+    - ssl
+
+- name: Check if the application specific config exists
+  stat:
+    path: /etc/apcahe2/sites-available/{{ rails_app_name }}.conf
+  register: app_httpd_config
+  changed_when: not app_httpd_config.stat.exists
+  tags:
+    - rails_app
+    - passenger
+
+- name: Put the applications specific template in place
+  template:
+    src: apache2-site.conf.j2
+    dest: /etc/apache2/sites-available/{{ rails_app_name }}.conf
+    mode: 0644
+  become: true
+  notify: restart apache
+  tags:
+    - rails_app
+    - passenger
+
+# The order of handlers is unpredictable. Sometimes when an app config is first created
+# ansble tries to restart passenger app before apache is restarted, which then fails the playbook
+# @TODO Better solution is to move this config task to it's own play.
+- name: Force restart apache when the config added for first time
+  service:
+    name: "{{ httpd_svc }}"
+    state: restarted
+  when: not app_httpd_config.stat.exists
+  become: true
+  tags:
+    - rails_app
+    - passenger

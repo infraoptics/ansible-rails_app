@@ -1,27 +1,9 @@
 ---
-
 - name: Install rails dependencies
-  yum:
-    name: ["git-core",
-           "zlib",
-           "zlib-devel",
-           "gcc-c++",
-           "patch",
-           "readline",
-           "readline-devel",
-           "libyaml-devel",
-           "libffi-devel",
-           "openssl-devel",
-           "make",
-           "bzip2",
-           "autoconf",
-           "automake",
-           "libtool",
-           "bison",
-           "curl",
-           "sqlite-devel",
-           "epel-release"]
+  package:
+    name: "{{ item }}"
     state: present
+  loop: "{{ packages[ansible_os_family|lower] }}"
   become: true
 
 - name: Check current node version
@@ -33,7 +15,7 @@
 - name: Remove old nodejs versions and configs
   block:
     - name: remove old versions of node
-      yum:
+      package:
         name: nodejs
         state: absent
 
@@ -42,23 +24,33 @@
         paths: /etc/yum.repos.d/
         patterns: "nodesource*.repo"
       register: nodesource_yum_repos
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: remove old nodesource repo configs
       file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ nodesource_yum_repos.files }}"
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: clean the cache so old repo config get fully removed
       command: yum clean all
       args:
         warn: false
-  when: installed_node_version.stdout is not regex("v{{ nodejs_major_version }}.*")  # noqa 102
+  when: installed_node_version.stdout is not regex("v{{ nodejs_major_version }}.*") and
+    ansible_facts['os_family'] == "RedHat"
 
-- name: Import Nodesource RPM key
+- name: Import Nodesource RPM key (RH)
   rpm_key:
     key: https://rpm.nodesource.com/pub/el/NODESOURCE-GPG-SIGNING-KEY-EL
     state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Import Nodesource RPM key (Debian)
+  apt_key:
+    url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Add Nodesource repositories for Node.js
   yum_repository:
@@ -67,6 +59,12 @@
     baseurl: "https://rpm.nodesource.com/pub_{{ nodejs_major_version }}.x/el/{{ ansible_distribution_major_version }}/$basearch"  # noqa 204
     gpgcheck: true
     state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Add Nodesource repositories for Node.js
+  apt_repository:
+    repo: "deb https://deb.nodesource.com/node_{{ nodejs_major_version }}.x {{ ansible_distribution_release }} main"  # noqa 204
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Ensure Node.js and npm are installed.
   yum:
@@ -74,6 +72,13 @@
     state: present
     enablerepo: "nodesource"
     update_cache: true
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Ensure Node.js and npm are installed.
+  yum:
+    name: "nodejs"
+  when: ansible_facts['os_family'] == "Debian"
+
 
 - name: Install yarn node package if this project needs it
   npm:
@@ -84,7 +89,7 @@
   when: rails_app_use_webpack is defined and rails_app_use_webpack
 
 - name: Install app specifc dependencies
-  yum:
+  package:
     name: "{{ rails_app_additional_dependencies | default([]) }}"
     state: present
   become: true

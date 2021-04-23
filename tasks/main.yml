@@ -1,8 +1,15 @@
 ---
 # tasks file for rails_app
 
+- name: set distro-specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - '{{ ansible_os_family }}.yml'
+    - default.yml
+
+- include_vars: secrets.yml
 
 - include: dependencies.yml
-- include: passenger-config.yml
+- include: "passenger-config-{{ ansible_facts['os_family']|lower }}.yml"
   when: is_webserver
 - include: install-app.yml

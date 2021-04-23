@@ -1,0 +1,62 @@
+#Disable Indexes unless globally
+Options -Indexes
+ExtendedStatus On
+
+# Disable Trace
+TraceEnable off
+
+# Disable back-end info in headers.
+ServerSignature Off
+ServerTokens Prod
+
+Header always set X-Frame-Options SAMEORIGIN
+Header always set X-Content-Type-Options nosniff
+
+<VirtualHost *:80>
+    ServerName {{ fqdn | default(ansible_fqdn) }}
+
+    {% if rails_app_force_ssl %}
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule (.*) https://%{SERVER_NAME}/$1 [R,L]
+    {% endif %}
+
+#  Copied over from cob role, in case needed instead of above
+#    {% if rails_app_force_ssl %}
+#      RedirectMatch permanent (.*) https://{{ fqdn | default(ansible_fqdn) }}/$1
+#    {% endif %}
+
+    # Tell Apache and Passenger where your app's 'public' directory is
+    DocumentRoot /var/www/html
+    PassengerRuby /usr/bin/ruby
+
+    {% if app_set_root_redirect %}
+    RedirectMatch ^/$ {{ app_root_redirect }}
+    {% endif %}
+
+    #include app specific configs in the applications directory
+    Alias {{ rails_app_url_base_path }} {{ rails_app_install_path }}/public/
+      <Location {{ rails_app_url_base_path}} >
+        PassengerBaseURI {{ rails_app_url_base_path }}
+        PassengerAppRoot {{ rails_app_install_path }}
+        PassengerRuby /home/{{ rails_app_user }}/.rbenv/versions/{{ rbenv.default_ruby }}/bin/ruby
+      </Location>
+      <Directory {{ rails_app_install_path }}/public>
+        Allow from all
+        Options -MultiViews
+      </Directory>
+
+    {% if httpd_status_enable %}
+      <IfModule mod_status.c>
+        <Location /server-status>
+          SetHandler server-status
+          Order deny,allow
+          Deny from all
+          Allow from localhost
+        </Location>
+      </IfModule>
+    {% endif %}
+
+</VirtualHost>
+
+AddOutputFilterByType DEFLATE text/plain text/html text/xml text/css application/xml application/xhtml+xml application/rss+xml application/javascript application/x-javascript
